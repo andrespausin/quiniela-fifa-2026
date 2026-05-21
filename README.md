@@ -37,11 +37,12 @@ npm run dev                        # http://localhost:3000
 
 Variables obligatorias (ver `.env.example`):
 
-- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`,
   `SUPABASE_SERVICE_ROLE_KEY`
 - `INVITATION_PIN` — clave estática para registrarse
 - `FOOTBALL_DATA_API_KEY` — key de football-data.org
 - `CRON_SECRET` — bearer token de los endpoints de cron
+  (generar con `openssl rand -hex 32`)
 
 ## Base de datos
 
@@ -53,30 +54,45 @@ Más detalles en [`supabase/README.md`](supabase/README.md).
 
 ## Despliegue en Railway
 
-1. Crea un proyecto en https://railway.app → **Deploy from GitHub** y
-   selecciona este repo. Railway detectará `railway.json` y compilará
-   con NIXPACKS.
-2. En **Variables**, replica las mismas claves del `.env.example`.
-3. Tras el primer deploy, ejecuta una vez:
+1. https://railway.app → **New Project → Deploy from GitHub** → selecciona
+   `andrespausin/quiniela-fifa-2026`. Railway detectará `railway.json` y
+   compilará con NIXPACKS.
+2. Pestaña **Variables** del servicio → pega TODAS las del `.env.example`
+   con los valores reales (las mismas que ya usas en local). Importante:
+   - `SUPABASE_SERVICE_ROLE_KEY` debe ir aquí, **no** en cliente.
+   - `NEXT_PUBLIC_APP_URL` con la URL pública que Railway te asigne.
+3. **Generate Domain** desde la pestaña *Settings → Networking* para que
+   Railway publique tu app en `https://<algo>.up.railway.app`.
+4. Tras el primer deploy, los 104 partidos ya están cargados en Supabase
+   (los sembramos en local con `npm run sync:fixtures`), así que el
+   dashboard funciona inmediatamente. Si quisieras sembrar desde
+   Railway en su lugar, usa:
    ```bash
    curl -X POST -H "Authorization: Bearer $CRON_SECRET" \
-        https://<app>.up.railway.app/api/cron/sync-fixtures
+     https://<app>.up.railway.app/api/cron/sync-fixtures
    ```
-   para cargar los 104 partidos y el catálogo de equipos.
 
-### Crons recomendados
+### Crons recomendados (gratis con cron-job.org)
 
 | Endpoint                       | Frecuencia                                  |
 |--------------------------------|---------------------------------------------|
-| `POST /api/cron/sync-fixtures` | 1× al día                                   |
+| `POST /api/cron/sync-fixtures` | 1× al día (catálogo + nuevos cruces)        |
 | `POST /api/cron/sync-results`  | cada 10-15 min en días de partido           |
 
-Cualquier scheduler externo gratuito sirve: Railway Cron, GitHub
-Actions (con `schedule:`), cron-job.org, etc. Ejemplo de header
-obligatorio:
+Pasos en cron-job.org:
 
-```
-Authorization: Bearer <CRON_SECRET>
+1. Crea cuenta gratis en https://cron-job.org.
+2. *Create cronjob* → URL: `https://<app>.up.railway.app/api/cron/sync-results`.
+3. *Advanced → Headers* → añade: `Authorization: Bearer <CRON_SECRET>`.
+4. *Schedule* → cada 15 minutos durante el Mundial.
+5. Repite para `sync-fixtures` con frecuencia diaria.
+
+### Scripts de mantenimiento manual
+
+```bash
+npm run sync:fixtures   # repuebla equipos + 104 partidos desde football-data
+npm run sync:results    # actualiza marcadores y avanza clasificados
+npm run sync:all        # ambos
 ```
 
 ## Scripts

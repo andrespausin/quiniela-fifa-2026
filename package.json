@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start -p ${PORT:-3000}",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "sync:fixtures": "tsx scripts/sync.ts fixtures",
+    "sync:results": "tsx scripts/sync.ts results",
+    "sync:all": "tsx scripts/sync.ts all"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
@@ -28,6 +31,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
+    "tsx": "^4.22.3",
     "typescript": "^5"
   }
 }

@@ -11,8 +11,8 @@ type GroupRow = Database["public"]["Tables"]["groups"]["Row"];
 type LeaderboardRow = Database["public"]["Views"]["leaderboard"]["Row"];
 
 export interface MatchWithTeams extends MatchRow {
-  home_team: Pick<TeamRow, "id" | "code" | "name"> | null;
-  away_team: Pick<TeamRow, "id" | "code" | "name"> | null;
+  home_team: Pick<TeamRow, "id" | "code" | "name" | "flag_emoji"> | null;
+  away_team: Pick<TeamRow, "id" | "code" | "name" | "flag_emoji"> | null;
   group: Pick<GroupRow, "id" | "code"> | null;
 }
 
@@ -26,8 +26,8 @@ export function useMatchesQuery() {
         .from("matches")
         .select(
           `*,
-           home_team:home_team_id(id,code,name),
-           away_team:away_team_id(id,code,name),
+           home_team:home_team_id(id,code,name,flag_emoji),
+           away_team:away_team_id(id,code,name,flag_emoji),
            group:group_id(id,code)`,
         )
         .order("kickoff_at", { ascending: true });

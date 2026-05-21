@@ -5,8 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 
 const items = [
   { href: "/dashboard", label: "Mis predicciones" },
-  { href: "/brackets", label: "Brackets" },
-  { href: "/leaderboard", label: "Leaderboard" },
+  { href: "/eliminatorias", label: "Eliminatorias" },
+  { href: "/clasificacion", label: "Clasificación" },
 ];
 
 export function Nav({ userEmail }: { userEmail?: string | null }) {

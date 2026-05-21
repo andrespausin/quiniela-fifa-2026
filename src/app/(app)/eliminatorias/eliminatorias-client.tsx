@@ -10,7 +10,7 @@ import {
 } from "@/lib/tournament/standings";
 import { formatKickoff, stageLabel } from "@/lib/format";
 
-export function BracketsClient() {
+export function EliminatoriasClient() {
   const { data, isLoading, error } = useMatchesQuery();
 
   const grouped = useMemo(() => groupByGroup(data ?? []), [data]);
@@ -74,8 +74,10 @@ export function BracketsClient() {
                   {m.bracket_slot ? ` · ${m.bracket_slot}` : ""}
                 </span>
                 <span className="flex-1 text-center font-medium">
+                  {m.home_team?.flag_emoji ?? ""}{" "}
                   {m.home_team?.name ?? m.home_placeholder ?? "Por definir"}{" "}
                   <span className="text-zinc-400">vs</span>{" "}
+                  {m.away_team?.flag_emoji ?? ""}{" "}
                   {m.away_team?.name ?? m.away_placeholder ?? "Por definir"}
                 </span>
                 <span className="text-xs text-zinc-500">

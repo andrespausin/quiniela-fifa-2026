@@ -33,8 +33,12 @@ create table if not exists public.teams (
   code         text not null unique,     -- p.ej. "ARG", "MEX"
   name         text not null,            -- "Argentina"
   flag_emoji   text,
-  external_id  text                      -- id en el proveedor de datos
+  external_id  text unique               -- id en el proveedor de datos
 );
+
+-- Idempotente: si la tabla existía sin la unicidad, añadirla.
+create unique index if not exists teams_external_id_unique
+  on public.teams(external_id) where external_id is not null;
 
 comment on table public.teams is 'Selecciones nacionales participantes en el Mundial 2026.';
 

@@ -18,10 +18,16 @@ interface Props {
 export function PredictionCard({ match, prediction }: Props) {
   const locked = isLocked(match.kickoff_at);
   const mutation = useUpsertPrediction();
+  const homeFlag = match.home_team?.flag_emoji ?? "";
+  const awayFlag = match.away_team?.flag_emoji ?? "";
   const homeLabel =
-    match.home_team?.name ?? match.home_placeholder ?? "Por definir";
+    [homeFlag, match.home_team?.name ?? match.home_placeholder ?? "Por definir"]
+      .filter(Boolean)
+      .join(" ");
   const awayLabel =
-    match.away_team?.name ?? match.away_placeholder ?? "Por definir";
+    [awayFlag, match.away_team?.name ?? match.away_placeholder ?? "Por definir"]
+      .filter(Boolean)
+      .join(" ");
   const teamsKnown = Boolean(match.home_team && match.away_team);
   const showPenaltyToggle = match.stage !== "group";
 
