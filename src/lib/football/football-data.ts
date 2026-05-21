@@ -49,12 +49,31 @@ function authHeaders() {
   return { "X-Auth-Token": env.footballDataApiKey } as const;
 }
 
+// Throttling segun headers (recomendacion explicita del autor de la API).
+// El Free Tier permite 10 req/min; si X-Requests-Available-Minute baja
+// a 0 esperamos los segundos indicados en X-RequestCounter-Reset.
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     headers: authHeaders(),
-    // El cron corre en server, no queremos cache
     cache: "no-store",
   });
+
+  if (res.status === 429) {
+    const retryAfter = Number(res.headers.get("X-RequestCounter-Reset") ?? 60);
+    throw new Error(
+      `football-data ${path}: rate limit alcanzado, reintenta en ${retryAfter}s`,
+    );
+  }
+
+  const remaining = Number(
+    res.headers.get("X-Requests-Available-Minute") ?? "1",
+  );
+  if (Number.isFinite(remaining) && remaining <= 1) {
+    const wait = Number(res.headers.get("X-RequestCounter-Reset") ?? 60);
+    // Sleep cooperativo para que el resto de la sincronizacion no falle.
+    await new Promise((r) => setTimeout(r, Math.min(wait, 65) * 1000));
+  }
+
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(
