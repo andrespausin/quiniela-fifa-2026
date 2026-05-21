@@ -50,36 +50,44 @@ export function usePredictionsQuery() {
   });
 }
 
-export function useUpsertPrediction() {
+export interface PredictionDraft {
+  matchId: number;
+  homeScore: number;
+  awayScore: number;
+  winner?: "home" | "away" | "draw" | null;
+}
+
+/**
+ * Guarda múltiples predicciones en un solo round-trip a Supabase.
+ * El trigger SQL (predictions_check_lock) sigue bloqueando partidos
+ * a -1h del kickoff: si alguno está bloqueado, el upsert falla entero;
+ * por eso filtramos en el cliente antes de mandar.
+ */
+export function useBatchUpsertPredictions() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: {
-      matchId: number;
-      homeScore: number;
-      awayScore: number;
-      winner?: "home" | "away" | "draw" | null;
-    }) => {
+    mutationFn: async (drafts: PredictionDraft[]) => {
+      if (drafts.length === 0) return [] as PredictionRow[];
       const sb = supabase();
       const {
         data: { user },
       } = await sb.auth.getUser();
       if (!user) throw new Error("No autenticado");
+
+      const rows = drafts.map((d) => ({
+        user_id: user.id,
+        match_id: d.matchId,
+        home_score: d.homeScore,
+        away_score: d.awayScore,
+        winner: d.winner ?? null,
+      }));
+
       const { data, error } = await sb
         .from("predictions")
-        .upsert(
-          {
-            user_id: user.id,
-            match_id: input.matchId,
-            home_score: input.homeScore,
-            away_score: input.awayScore,
-            winner: input.winner ?? null,
-          },
-          { onConflict: "user_id,match_id" },
-        )
-        .select()
-        .single();
+        .upsert(rows, { onConflict: "user_id,match_id" })
+        .select();
       if (error) throw new Error(error.message);
-      return data as PredictionRow;
+      return (data ?? []) as PredictionRow[];
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["predictions"] });

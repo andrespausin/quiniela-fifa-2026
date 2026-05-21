@@ -67,27 +67,42 @@ export function EliminatoriasClient() {
             {knockout.map((m) => (
               <div
                 key={m.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+                className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
               >
-                <span className="font-medium uppercase text-zinc-500">
-                  {stageLabel[m.stage]}
-                  {m.bracket_slot ? ` · ${m.bracket_slot}` : ""}
-                </span>
-                <span className="flex-1 text-center font-medium">
-                  {m.home_team?.flag_emoji ?? ""}{" "}
-                  {m.home_team?.name ?? m.home_placeholder ?? "Por definir"}{" "}
-                  <span className="text-zinc-400">vs</span>{" "}
-                  {m.away_team?.flag_emoji ?? ""}{" "}
-                  {m.away_team?.name ?? m.away_placeholder ?? "Por definir"}
-                </span>
-                <span className="text-xs text-zinc-500">
-                  {formatKickoff(m.kickoff_at)}
-                </span>
-                {m.home_score !== null && m.away_score !== null ? (
-                  <span className="font-mono text-base font-semibold tabular-nums">
-                    {m.home_score} - {m.away_score}
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 font-semibold uppercase tracking-wide text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+                    {stageLabel[m.stage]}
+                    {m.bracket_slot ? ` · ${m.bracket_slot}` : ""}
                   </span>
-                ) : null}
+                  <span className="text-zinc-500">
+                    {formatKickoff(m.kickoff_at)}
+                  </span>
+                </div>
+                <div className="flex flex-1 items-center justify-center gap-3 text-base sm:text-lg">
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span className="text-2xl sm:text-3xl">
+                      {m.home_team?.flag_emoji ?? "🏳️"}
+                    </span>
+                    <span className="truncate font-semibold">
+                      {m.home_team?.name ?? m.home_placeholder ?? "Por definir"}
+                    </span>
+                  </span>
+                  {m.home_score !== null && m.away_score !== null ? (
+                    <span className="font-mono text-xl font-bold tabular-nums">
+                      {m.home_score} - {m.away_score}
+                    </span>
+                  ) : (
+                    <span className="text-zinc-400">vs</span>
+                  )}
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span className="truncate font-semibold">
+                      {m.away_team?.name ?? m.away_placeholder ?? "Por definir"}
+                    </span>
+                    <span className="text-2xl sm:text-3xl">
+                      {m.away_team?.flag_emoji ?? "🏳️"}
+                    </span>
+                  </span>
+                </div>
               </div>
             ))}
           </div>
@@ -102,21 +117,23 @@ function GroupTable({
   standings,
 }: {
   code: string;
-  standings: TeamStanding[];
+  standings: (TeamStanding & { name?: string; flag?: string })[];
 }) {
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <h3 className="mb-2 text-sm font-semibold">Grupo {code}</h3>
-      <table className="w-full text-xs">
-        <thead className="text-zinc-500">
+    <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <h3 className="border-b border-zinc-200 px-3 py-2 text-base font-semibold dark:border-zinc-800">
+        Grupo {code}
+      </h3>
+      <table className="w-full text-sm">
+        <thead className="bg-zinc-50 text-xs uppercase text-zinc-500 dark:bg-zinc-950">
           <tr>
-            <th className="text-left">Equipo</th>
-            <th className="text-right">PJ</th>
-            <th className="text-right">G</th>
-            <th className="text-right">E</th>
-            <th className="text-right">P</th>
-            <th className="text-right">DG</th>
-            <th className="text-right">Pts</th>
+            <th className="px-3 py-1.5 text-left">Equipo</th>
+            <th className="px-1.5 py-1.5 text-right">PJ</th>
+            <th className="hidden px-1.5 py-1.5 text-right sm:table-cell">G</th>
+            <th className="hidden px-1.5 py-1.5 text-right sm:table-cell">E</th>
+            <th className="hidden px-1.5 py-1.5 text-right sm:table-cell">P</th>
+            <th className="px-1.5 py-1.5 text-right">DG</th>
+            <th className="px-3 py-1.5 text-right">Pts</th>
           </tr>
         </thead>
         <tbody>
@@ -131,18 +148,26 @@ function GroupTable({
                     : ""
               }
             >
-              <td className="py-1 pr-2 font-medium">
-                {(s as TeamStanding & { name?: string }).name ??
-                  `#${s.teamId}`}
+              <td className="px-3 py-2 font-medium">
+                <span className="mr-2 text-lg">{s.flag ?? ""}</span>
+                {s.name ?? `#${s.teamId}`}
               </td>
-              <td className="py-1 text-right tabular-nums">{s.played}</td>
-              <td className="py-1 text-right tabular-nums">{s.wins}</td>
-              <td className="py-1 text-right tabular-nums">{s.draws}</td>
-              <td className="py-1 text-right tabular-nums">{s.losses}</td>
-              <td className="py-1 text-right tabular-nums">
+              <td className="px-1.5 py-2 text-right tabular-nums">
+                {s.played}
+              </td>
+              <td className="hidden px-1.5 py-2 text-right tabular-nums sm:table-cell">
+                {s.wins}
+              </td>
+              <td className="hidden px-1.5 py-2 text-right tabular-nums sm:table-cell">
+                {s.draws}
+              </td>
+              <td className="hidden px-1.5 py-2 text-right tabular-nums sm:table-cell">
+                {s.losses}
+              </td>
+              <td className="px-1.5 py-2 text-right tabular-nums">
                 {s.goalDifference}
               </td>
-              <td className="py-1 text-right font-semibold tabular-nums">
+              <td className="px-3 py-2 text-right font-bold tabular-nums">
                 {s.points}
               </td>
             </tr>
@@ -155,9 +180,16 @@ function GroupTable({
 
 function groupByGroup(matches: MatchWithTeams[]) {
   const teamName = new Map<number, string>();
+  const teamFlag = new Map<number, string>();
   for (const m of matches) {
-    if (m.home_team) teamName.set(m.home_team.id, m.home_team.name);
-    if (m.away_team) teamName.set(m.away_team.id, m.away_team.name);
+    if (m.home_team) {
+      teamName.set(m.home_team.id, m.home_team.name);
+      if (m.home_team.flag_emoji) teamFlag.set(m.home_team.id, m.home_team.flag_emoji);
+    }
+    if (m.away_team) {
+      teamName.set(m.away_team.id, m.away_team.name);
+      if (m.away_team.flag_emoji) teamFlag.set(m.away_team.id, m.away_team.flag_emoji);
+    }
   }
 
   const groups = new Map<
@@ -194,8 +226,12 @@ function groupByGroup(matches: MatchWithTeams[]) {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([code, slot]) => {
       const st = computeGroupStandings([...slot.teamIds], slot.played);
-      const named = st.map((s) => ({ ...s, name: teamName.get(s.teamId) }));
-      return { code, standings: named as TeamStanding[] };
+      const named = st.map((s) => ({
+        ...s,
+        name: teamName.get(s.teamId),
+        flag: teamFlag.get(s.teamId),
+      }));
+      return { code, standings: named };
     });
 
   return out;
