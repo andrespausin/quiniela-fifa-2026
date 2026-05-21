@@ -51,10 +51,33 @@ de bloqueo, vista de leaderboard y seed de los 12 grupos.
 
 Más detalles en [`supabase/README.md`](supabase/README.md).
 
-## Despliegue
+## Despliegue en Railway
 
-`railway.json` define `build` y `start` para que Railway use NIXPACKS.
-Configurar las mismas variables de entorno en el dashboard de Railway.
+1. Crea un proyecto en https://railway.app → **Deploy from GitHub** y
+   selecciona este repo. Railway detectará `railway.json` y compilará
+   con NIXPACKS.
+2. En **Variables**, replica las mismas claves del `.env.example`.
+3. Tras el primer deploy, ejecuta una vez:
+   ```bash
+   curl -X POST -H "Authorization: Bearer $CRON_SECRET" \
+        https://<app>.up.railway.app/api/cron/sync-fixtures
+   ```
+   para cargar los 104 partidos y el catálogo de equipos.
+
+### Crons recomendados
+
+| Endpoint                       | Frecuencia                                  |
+|--------------------------------|---------------------------------------------|
+| `POST /api/cron/sync-fixtures` | 1× al día                                   |
+| `POST /api/cron/sync-results`  | cada 10-15 min en días de partido           |
+
+Cualquier scheduler externo gratuito sirve: Railway Cron, GitHub
+Actions (con `schedule:`), cron-job.org, etc. Ejemplo de header
+obligatorio:
+
+```
+Authorization: Bearer <CRON_SECRET>
+```
 
 ## Scripts
 
