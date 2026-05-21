@@ -9,6 +9,7 @@
  */
 
 import { env } from "@/lib/env";
+import { localizeTeam } from "./team-names";
 import type {
   FootballDataProvider,
   NormalizedMatch,
@@ -144,11 +145,16 @@ export const footballDataProvider: FootballDataProvider = {
     const data = await get<{ teams: FdTeam[] }>(
       `/competitions/${COMPETITION}/teams`,
     );
-    return (data.teams ?? []).map<NormalizedTeam>((t) => ({
-      externalId: String(t.id),
-      code: (t.tla ?? t.shortName ?? t.name).slice(0, 3).toUpperCase(),
-      name: t.name,
-    }));
+    return (data.teams ?? []).map<NormalizedTeam>((t) => {
+      const code = (t.tla ?? t.shortName ?? t.name).slice(0, 3).toUpperCase();
+      const locale = localizeTeam(code, t.name);
+      return {
+        externalId: String(t.id),
+        code,
+        name: locale.name,
+        flagEmoji: locale.flag,
+      };
+    });
   },
 
   async fetchMatches() {

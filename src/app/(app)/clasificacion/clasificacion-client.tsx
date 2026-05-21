@@ -2,11 +2,11 @@
 
 import { useLeaderboardQuery } from "@/lib/queries";
 
-export function LeaderboardClient() {
+export function ClasificacionClient() {
   const { data, isLoading, error } = useLeaderboardQuery();
 
   if (isLoading) {
-    return <p className="text-sm text-zinc-500">Cargando ranking…</p>;
+    return <p className="text-sm text-zinc-500">Cargando tabla…</p>;
   }
   if (error) {
     return (
@@ -25,7 +25,7 @@ export function LeaderboardClient() {
             <th className="px-4 py-2 text-left">#</th>
             <th className="px-4 py-2 text-left">Jugador</th>
             <th className="px-4 py-2 text-right">Partidos</th>
-            <th className="px-4 py-2 text-right">Bracket</th>
+            <th className="px-4 py-2 text-right">Eliminatorias</th>
             <th className="px-4 py-2 text-right">Total</th>
           </tr>
         </thead>

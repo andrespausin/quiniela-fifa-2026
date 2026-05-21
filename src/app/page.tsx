@@ -11,8 +11,8 @@ export default function Home() {
           Quiniela privada del grupo
         </h1>
         <p className="mx-auto mb-10 max-w-xl text-lg text-zinc-600 dark:text-zinc-400">
-          Predice los 104 partidos, compite contra tus amigos y sigue el
-          leaderboard en tiempo real. Acceso restringido por código de
+          Predice los 104 partidos, compite contra tus amigos y sigue la
+          clasificación en tiempo real. Acceso restringido por código de
           invitación.
         </p>
         <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">

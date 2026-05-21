@@ -32,9 +32,11 @@ export async function syncTeams() {
     flag_emoji: t.flagEmoji ?? null,
   }));
 
+  // code es UNIQUE en el schema (los TLA de FIFA son únicos entre las 48
+  // selecciones); usamos esa columna como llave de conflicto.
   const { error } = await supabase
     .from("teams")
-    .upsert(rows, { onConflict: "external_id" });
+    .upsert(rows, { onConflict: "code" });
   if (error) throw new Error(`syncTeams: ${error.message}`);
 
   return { inserted: rows.length };
