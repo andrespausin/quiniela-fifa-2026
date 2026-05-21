@@ -36,13 +36,16 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isAuthRoute =
     pathname.startsWith("/login") || pathname.startsWith("/registro");
+  // Las API de auth y cron deben atravesar el middleware sin redirección:
+  // /api/auth establece la sesión, /api/cron usa su propio bearer.
+  const isApiPassthrough =
+    pathname.startsWith("/api/auth") || pathname.startsWith("/api/cron");
   const isPublicAsset =
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/api/cron") ||
     pathname === "/" ||
     pathname.startsWith("/favicon");
 
-  if (!user && !isAuthRoute && !isPublicAsset) {
+  if (!user && !isAuthRoute && !isPublicAsset && !isApiPassthrough) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
