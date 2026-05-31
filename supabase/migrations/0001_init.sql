@@ -337,7 +337,7 @@ end $$;
 create or replace function public.matches_after_finish()
 returns trigger language plpgsql as $$
 declare
-  r record;
+  r public.predictions%rowtype;
   v_pts integer;
 begin
   if new.status = 'finished'
@@ -431,18 +431,39 @@ create policy "matches_read"      on public.matches      for select to authentic
 drop policy if exists "bracket_results_read" on public.bracket_results;
 create policy "bracket_results_read" on public.bracket_results for select to authenticated using (true);
 
--- predictions: cada usuario sobre lo suyo
+-- predictions: cada usuario sobre lo suyo + bloqueo a -1h del kickoff
+-- (el bloqueo se intenta vía RLS pero en algunos entornos Supabase
+-- no se evalúa el subquery; el cliente refuerza la regla en la UI).
+create or replace function public.match_is_editable(p_match_id integer)
+returns boolean language sql stable security definer
+set search_path = public, pg_catalog as $$
+  select coalesce(
+    (select now() < (kickoff_at - interval '1 hour')
+       from public.matches where id = p_match_id),
+    false
+  );
+$$;
+grant execute on function public.match_is_editable(integer)
+  to anon, authenticated, service_role;
+
 drop policy if exists "predictions_read_own" on public.predictions;
 create policy "predictions_read_own" on public.predictions
   for select to authenticated using (auth.uid() = user_id);
 
 drop policy if exists "predictions_insert_own" on public.predictions;
 create policy "predictions_insert_own" on public.predictions
-  for insert to authenticated with check (auth.uid() = user_id);
+  for insert to authenticated
+  with check (
+    auth.uid() = user_id and public.match_is_editable(match_id)
+  );
 
 drop policy if exists "predictions_update_own" on public.predictions;
 create policy "predictions_update_own" on public.predictions
-  for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+  for update to authenticated
+  using (auth.uid() = user_id)
+  with check (
+    auth.uid() = user_id and public.match_is_editable(match_id)
+  );
 
 drop policy if exists "predictions_delete_own" on public.predictions;
 create policy "predictions_delete_own" on public.predictions

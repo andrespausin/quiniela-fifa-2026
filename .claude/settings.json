@@ -1,7 +1,30 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(git config *)",
+      "Bash(nslookup ffbvaffqsribhaxarrhw.supabase.co)",
+      "Bash(curl -sS -o /dev/null -w \"HTTP %{http_code} · resolve %{remote_ip}\\\\n\" --max-time 8 https://ffbvaffqsribhaxarrhw.supabase.co/rest/v1/)",
+      "Bash(curl -sS -o /dev/null -w \"HTTP %{http_code} · ip %{remote_ip} · t=%{time_total}s\\\\n\" --max-time 6 https://ffbvaffqsribhaxarrhw.supabase.co/auth/v1/health)",
+      "Bash(rm -rf .next && npm run typecheck 2>&1 | tail -10 && echo \"---LINT---\" && npm run lint 2>&1 | tail -10 && echo \"---BUILD---\" && npm run build 2>&1 | tail -30)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(tail -50 /tmp/dev.log 2>&1 | head -60)",
+      "Read(//tmp/**)",
+      "Bash(curl -s -o /dev/null -w 'HTTP %{http_code}\\\\n' -L http://localhost:3001/)",
+      "Bash(curl -s -o /dev/null -w 'HTTP %{http_code} → %{redirect_url}\\\\n' --max-redirs 0 http://localhost:3001/dashboard)",
+      "Bash(curl -s -o /tmp/r.json -w 'HTTP %{http_code}\\\\n' -X POST -H 'content-type: application/json' --data '{\"email\":\"nope@x.com\",\"password\":\"wrong\"}' http://localhost:3001/api/auth/login)",
+      "Bash(curl -s -o /tmp/r.json -w 'HTTP %{http_code}\\\\n' -X POST -H 'content-type: application/json' --data '{\"email\":\"test-pin@x.com\",\"password\":\"abcd1234\",\"displayName\":\"Test\",\"pin\":\"PIN-MALO\"}' http://localhost:3001/api/auth/signup)",
+      "Bash(curl -s -o /tmp/r.json -w 'HTTP %{http_code}\\\\n' -X POST http://localhost:3001/api/cron/sync-fixtures)",
+      "Bash(curl -s -o /tmp/r.json -w 'HTTP %{http_code}\\\\n' -X POST -H 'content-type: application/json' --data '{\"email\":\"http-smoke-__TRACKED_VAR__@quiniela.test\",\"password\":\"abcd-1234-smoke\",\"displayName\":\"HTTP Smoke\",\"pin\":\"QUINIELA-2026\"}' http://localhost:3001/api/auth/signup)",
+      "Bash(curl -s -o /tmp/r.json -w 'HTTP %{http_code}\\\\n' -X POST -H 'Authorization: Bearer 886fdcc1b669a652b4c50cc1fc1279afbf4d1c6c516069bc0d14a6c1b2415e37' http://localhost:3001/api/cron/sync-results)",
+      "Bash(npx tsx *)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(pkill -f \"next-server\")",
+      "Bash(git -c user.email=candrespausin2001@gmail.com -c 'user.name=Andres Pausin' commit -m ' *)"
+    ],
+    "additionalDirectories": [
+      "/home/andrespausin/Documents/Pausin/quiniela-2026/quiniela-fifa-2026/.next",
+      "/tmp"
     ]
   }
 }

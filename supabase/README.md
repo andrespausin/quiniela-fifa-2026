@@ -42,9 +42,12 @@ Ver `.env.example` en la raíz. En particular:
 - Cada usuario sólo ve/escribe sus `predictions` y `bracket_predictions`.
 - Los catálogos (`teams`, `groups`, `matches`, …) son legibles por
   cualquier usuario autenticado.
-- **Bloqueo 1h antes del partido**: trigger
-  `predictions_check_lock` rechaza inserts/updates a partir de
-  `kickoff_at - 60 min`.
+- **Bloqueo 1h antes del partido**: defensa en 3 capas:
+  1. UI deshabilita los inputs (`isLocked()` en cliente)
+  2. Cliente filtra `dirtyDrafts` antes de enviar
+  3. Policy RLS con función `public.match_is_editable()` lo verifica
+     (en algunos entornos Supabase la evaluación REST no aplica el
+     subquery; las capas 1-2 son las activas).
 - **Cálculo automático de puntos**: trigger `matches_after_finish`
   recorre todas las predicciones del partido y actualiza
   `predictions.points` + `score_log`.

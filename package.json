@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "sync:fixtures": "tsx scripts/sync.ts fixtures",
     "sync:results": "tsx scripts/sync.ts results",
-    "sync:all": "tsx scripts/sync.ts all"
+    "sync:all": "tsx scripts/sync.ts all",
+    "preflight": "tsx scripts/preflight.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
