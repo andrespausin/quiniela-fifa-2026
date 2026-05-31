@@ -127,6 +127,12 @@ export function DashboardClient() {
     [matchesData, stage],
   );
 
+  // Set de matchIds con cambios sin guardar, para resaltar contadores por sección.
+  const dirtyMatchIds = useMemo(
+    () => new Set(dirtyDrafts.map((d) => d.matchId)),
+    [dirtyDrafts],
+  );
+
   if (matches.isLoading) {
     return <p className="text-sm text-zinc-500">Cargando partidos…</p>;
   }
@@ -191,6 +197,7 @@ export function DashboardClient() {
           baseline={baseline}
           pointsByMatch={pointsByMatch}
           onChangeFor={setDraft}
+          dirtyMatchIds={dirtyMatchIds}
         />
       ) : (
         <KnockoutView
@@ -199,6 +206,7 @@ export function DashboardClient() {
           baseline={baseline}
           pointsByMatch={pointsByMatch}
           onChangeFor={setDraft}
+          dirtyMatchIds={dirtyMatchIds}
         />
       )}
 
@@ -220,12 +228,14 @@ function GroupStageView({
   pointsByMatch,
   onChangeFor,
   draftFor,
+  dirtyMatchIds,
 }: {
   matches: MatchWithTeams[];
   draftFor: (id: number) => PredictionDraftValue;
   baseline: Map<number, PredictionDraftValue>;
   pointsByMatch: Map<number, number | null>;
   onChangeFor: (id: number) => (v: PredictionDraftValue) => void;
+  dirtyMatchIds: Set<number>;
 }) {
   const byGroup = new Map<string, MatchWithTeams[]>();
   for (const m of matches) {
@@ -237,22 +247,22 @@ function GroupStageView({
   const groups = [...byGroup.entries()].sort(([a], [b]) => a.localeCompare(b));
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-3 md:grid-cols-2">
       {groups.map(([code, ms]) => {
         const sorted = [...ms].sort((a, b) =>
           a.kickoff_at.localeCompare(b.kickoff_at),
         );
+        const groupDirty = sorted.filter((m) => dirtyMatchIds.has(m.id)).length;
+        const groupPredicted = sorted.filter(
+          (m) => baseline.has(m.id),
+        ).length;
         return (
-          <section
+          <CollapsibleSection
             key={code}
-            className="overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50/60 dark:border-zinc-800 dark:bg-zinc-950/40"
+            title={`Grupo ${code}`}
+            subtitle={`${groupPredicted}/${sorted.length} predichos`}
+            dirtyCount={groupDirty}
           >
-            <header className="border-b border-zinc-200 bg-white px-4 py-2 text-sm font-semibold dark:border-zinc-800 dark:bg-zinc-900">
-              Grupo {code}
-              <span className="ml-2 text-xs font-normal text-zinc-500">
-                {sorted.length} partidos
-              </span>
-            </header>
             <div className="flex flex-col gap-2 p-2">
               {sorted.map((m) => {
                 const draft = draftFor(m.id);
@@ -274,10 +284,67 @@ function GroupStageView({
                 );
               })}
             </div>
-          </section>
+          </CollapsibleSection>
         );
       })}
     </div>
+  );
+}
+
+/**
+ * Sección colapsable nativa con <details>. Cerrada por defecto en mobile,
+ * abierta por defecto en md+ vía CSS (open-on-desktop pattern).
+ */
+function CollapsibleSection({
+  title,
+  subtitle,
+  dirtyCount,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  dirtyCount?: number;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <details
+      open={defaultOpen}
+      className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm open:bg-zinc-50/60 dark:border-zinc-800 dark:bg-zinc-900 dark:open:bg-zinc-950/40"
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-950/40">
+        <div className="flex items-baseline gap-2">
+          <span className="text-base font-semibold">{title}</span>
+          {subtitle ? (
+            <span className="text-xs font-normal text-zinc-500">
+              {subtitle}
+            </span>
+          ) : null}
+        </div>
+        <div className="flex items-center gap-2">
+          {dirtyCount && dirtyCount > 0 ? (
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+              {dirtyCount} sin guardar
+            </span>
+          ) : null}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            aria-hidden="true"
+            className="h-4 w-4 text-zinc-500 transition-transform group-open:rotate-180"
+          >
+            <path
+              fillRule="evenodd"
+              d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 011.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </div>
+      </summary>
+      {children}
+    </details>
   );
 }
 
@@ -287,12 +354,14 @@ function KnockoutView({
   pointsByMatch,
   onChangeFor,
   draftFor,
+  dirtyMatchIds,
 }: {
   matches: MatchWithTeams[];
   draftFor: (id: number) => PredictionDraftValue;
   baseline: Map<number, PredictionDraftValue>;
   pointsByMatch: Map<number, number | null>;
   onChangeFor: (id: number) => (v: PredictionDraftValue) => void;
+  dirtyMatchIds: Set<number>;
 }) {
   const byDay = new Map<string, MatchWithTeams[]>();
   for (const m of matches) {
@@ -304,18 +373,23 @@ function KnockoutView({
   const days = [...byDay.entries()].sort(([a], [b]) => a.localeCompare(b));
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-3">
       {days.map(([day, ms]) => {
         const label = capitalize(dateFmt.format(new Date(`${day}T12:00:00Z`)));
         const sorted = [...ms].sort((a, b) =>
           a.kickoff_at.localeCompare(b.kickoff_at),
         );
+        const dayDirty = sorted.filter((m) => dirtyMatchIds.has(m.id)).length;
+        const predicted = sorted.filter((m) => baseline.has(m.id)).length;
         return (
-          <section key={day} className="flex flex-col gap-2">
-            <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-              {label}
-            </h3>
-            <div className="grid gap-2 md:grid-cols-2">
+          <CollapsibleSection
+            key={day}
+            title={label}
+            subtitle={`${predicted}/${sorted.length} predichos`}
+            dirtyCount={dayDirty}
+            defaultOpen
+          >
+            <div className="grid gap-2 p-2 md:grid-cols-2">
               {sorted.map((m) => {
                 const draft = draftFor(m.id);
                 const base = baseline.get(m.id);
@@ -336,7 +410,7 @@ function KnockoutView({
                 );
               })}
             </div>
-          </section>
+          </CollapsibleSection>
         );
       })}
     </div>
