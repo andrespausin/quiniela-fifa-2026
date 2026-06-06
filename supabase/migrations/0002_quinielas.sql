@@ -75,9 +75,11 @@ update public.predictions p
 alter table public.predictions
   alter column quiniela_id set not null;
 
--- Reemplazar unique constraint
+-- Reemplazar unique constraint (drop primero para idempotencia)
 alter table public.predictions
   drop constraint if exists predictions_user_id_match_id_key;
+alter table public.predictions
+  drop constraint if exists predictions_quiniela_id_match_id_key;
 alter table public.predictions
   add constraint predictions_quiniela_id_match_id_key unique(quiniela_id, match_id);
 
@@ -102,6 +104,8 @@ alter table public.bracket_predictions
 
 alter table public.bracket_predictions
   drop constraint if exists bracket_predictions_user_id_stage_team_id_key;
+alter table public.bracket_predictions
+  drop constraint if exists bracket_pred_quiniela_stage_team_key;
 alter table public.bracket_predictions
   add constraint bracket_pred_quiniela_stage_team_key unique(quiniela_id, stage, team_id);
 
