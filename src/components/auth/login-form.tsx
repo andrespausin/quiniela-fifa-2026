@@ -3,6 +3,7 @@
 import { useForm } from "@tanstack/react-form";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { loginSchema } from "@/lib/validation";
@@ -74,20 +75,30 @@ export function LoginForm() {
         }}
       >
         {(field) => (
-          <Input
-            label="Contraseña"
-            type="password"
-            name={field.name}
-            value={field.state.value}
-            onBlur={field.handleBlur}
-            onChange={(e) => field.handleChange(e.target.value)}
-            error={
-              field.state.meta.isTouched
-                ? (field.state.meta.errors[0] as string | undefined) ?? null
-                : null
-            }
-            autoComplete="current-password"
-          />
+          <div className="flex flex-col gap-1">
+            <Input
+              label="Contraseña"
+              type="password"
+              name={field.name}
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              error={
+                field.state.meta.isTouched
+                  ? (field.state.meta.errors[0] as string | undefined) ?? null
+                  : null
+              }
+              autoComplete="current-password"
+            />
+            <div className="flex justify-end">
+              <Link
+                href="/forgot-password"
+                className="text-xs text-zinc-500 hover:text-emerald-600 dark:hover:text-emerald-400"
+              >
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
+          </div>
         )}
       </form.Field>
 

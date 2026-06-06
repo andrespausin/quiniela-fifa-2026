@@ -36,6 +36,11 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isAuthRoute =
     pathname.startsWith("/login") || pathname.startsWith("/registro");
+  // Páginas de recuperación de contraseña: accesibles sin sesión,
+  // pero no redirigimos usuarios autenticados que las visiten.
+  const isPasswordRoute =
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/reset-password");
   // Las API de auth y cron deben atravesar el middleware sin redirección:
   // /api/auth establece la sesión, /api/cron usa su propio bearer.
   const isApiPassthrough =
@@ -45,7 +50,7 @@ export async function updateSession(request: NextRequest) {
     pathname === "/" ||
     pathname.startsWith("/favicon");
 
-  if (!user && !isAuthRoute && !isPublicAsset && !isApiPassthrough) {
+  if (!user && !isAuthRoute && !isPasswordRoute && !isPublicAsset && !isApiPassthrough) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
