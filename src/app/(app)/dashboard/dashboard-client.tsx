@@ -83,6 +83,7 @@ export function DashboardClient() {
     Record<number, PredictionDraftValue>
   >({});
   const [okFlash, setOkFlash] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [showCreate, setShowCreate] = useState(false);
 
@@ -152,6 +153,21 @@ export function DashboardClient() {
       </p>
     );
   }
+  if (quinielas.error) {
+    return (
+      <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm dark:border-red-900 dark:bg-red-950/30">
+        <p className="font-semibold text-red-700 dark:text-red-400">
+          No se pudo cargar la quiniela
+        </p>
+        <p className="mt-1 text-red-600 dark:text-red-500">
+          {(quinielas.error as Error).message}
+        </p>
+        <p className="mt-3 text-zinc-600 dark:text-zinc-400">
+          Si ves <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">relation &quot;quinielas&quot; does not exist</code>, aplica la migración <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">0002_quinielas.sql</code> en el SQL Editor de Supabase.
+        </p>
+      </div>
+    );
+  }
   if ((matchesData ?? []).length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-zinc-300 p-8 text-center text-sm text-zinc-500 dark:border-zinc-700">
@@ -165,17 +181,22 @@ export function DashboardClient() {
   }
 
   const onSave = async () => {
-    if (dirtyDrafts.length === 0 || !effectiveId) return;
+    setSaveError(null);
+    if (dirtyDrafts.length === 0) return;
+    if (!effectiveId) {
+      setSaveError("No hay quiniela activa. Aplica la migración 0002 en Supabase.");
+      return;
+    }
     try {
       await batch.mutateAsync({ quinielaId: effectiveId, drafts: dirtyDrafts });
       setOkFlash(true);
       setTimeout(() => setOkFlash(false), 1800);
-    } catch {
-      // el mensaje se expone abajo en SaveBar
+    } catch (err) {
+      setSaveError((err as Error).message);
     }
   };
 
-  const onDiscard = () => setOverrides({});
+  const onDiscard = () => { setOverrides({}); setSaveError(null); };
 
   const onCreateQuiniela = async () => {
     const name = newName.trim() || "Mi quiniela";
@@ -256,7 +277,7 @@ export function DashboardClient() {
       <SaveBar
         dirtyCount={dirtyDrafts.length}
         saving={batch.isPending}
-        error={batch.error ? (batch.error as Error).message : null}
+        error={saveError ?? (batch.error ? (batch.error as Error).message : null)}
         success={okFlash}
         onSave={onSave}
         onDiscard={onDiscard}
