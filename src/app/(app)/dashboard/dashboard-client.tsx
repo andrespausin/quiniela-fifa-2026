@@ -422,8 +422,15 @@ function GroupStageView({
 }
 
 /**
- * Sección colapsable nativa con <details>. Cerrada por defecto en mobile,
- * abierta por defecto en md+ vía CSS (open-on-desktop pattern).
+ * Sección colapsable nativa con <details>.
+ *
+ * Correcciones mobile:
+ * 1. El estado abierto/cerrado se gestiona con useState + onToggle en lugar de
+ *    depender del prop `open={defaultOpen}` estático. Sin esto, cada re-render
+ *    de React (p.ej. al pulsar +/-) forzaba el cierre de la sección.
+ * 2. El <summary> NO lleva `display:flex` directamente — en iOS Safari < 15.4
+ *    ese estilo rompe el toggle nativo de <details>. El flex se mueve a un
+ *    <div> interno para mantener el mismo layout visual.
  */
 function CollapsibleSection({
   title,
@@ -438,39 +445,46 @@ function CollapsibleSection({
   defaultOpen?: boolean;
   children: React.ReactNode;
 }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
   return (
     <details
-      open={defaultOpen}
+      open={isOpen}
+      onToggle={(e) =>
+        setIsOpen((e.currentTarget as HTMLDetailsElement).open)
+      }
       className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm open:bg-zinc-50/60 dark:border-zinc-800 dark:bg-zinc-900 dark:open:bg-zinc-950/40"
     >
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-950/40">
-        <div className="flex items-baseline gap-2">
-          <span className="text-base font-semibold">{title}</span>
-          {subtitle ? (
-            <span className="text-xs font-normal text-zinc-500">
-              {subtitle}
-            </span>
-          ) : null}
-        </div>
-        <div className="flex items-center gap-2">
-          {dirtyCount && dirtyCount > 0 ? (
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300">
-              {dirtyCount} sin guardar
-            </span>
-          ) : null}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            aria-hidden="true"
-            className="h-4 w-4 text-zinc-500 transition-transform group-open:rotate-180"
-          >
-            <path
-              fillRule="evenodd"
-              d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 011.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z"
-              clipRule="evenodd"
-            />
-          </svg>
+      <summary className="cursor-pointer list-none px-4 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-950/40">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-baseline gap-2">
+            <span className="text-base font-semibold">{title}</span>
+            {subtitle ? (
+              <span className="text-xs font-normal text-zinc-500">
+                {subtitle}
+              </span>
+            ) : null}
+          </div>
+          <div className="flex items-center gap-2">
+            {dirtyCount && dirtyCount > 0 ? (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                {dirtyCount} sin guardar
+              </span>
+            ) : null}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+              className="h-4 w-4 text-zinc-500 transition-transform group-open:rotate-180"
+            >
+              <path
+                fillRule="evenodd"
+                d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 011.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
         </div>
       </summary>
       {children}

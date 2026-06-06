@@ -170,7 +170,7 @@ function Stepper({
         aria-label="Restar gol"
         disabled={disabled || value === null}
         onClick={dec}
-        className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-300 bg-white text-xl font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
+        className="flex h-10 w-10 touch-manipulation items-center justify-center rounded-lg border border-zinc-300 bg-white text-xl font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
       >
         −
       </button>
@@ -202,7 +202,7 @@ function Stepper({
         aria-label="Sumar gol"
         disabled={disabled || (value !== null && value >= 30)}
         onClick={inc}
-        className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-300 bg-white text-xl font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
+        className="flex h-10 w-10 touch-manipulation items-center justify-center rounded-lg border border-zinc-300 bg-white text-xl font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
       >
         +
       </button>
