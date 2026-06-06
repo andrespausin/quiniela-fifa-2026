@@ -169,6 +169,25 @@ export function useLeaderboardQuery() {
 }
 
 // ---------------------------------------------------------------------------
+// Jugadores: todas las predicciones de una quiniela (vista de otro usuario)
+// ---------------------------------------------------------------------------
+
+export function useQuinielaPredictionsQuery(quinielaId: string | null) {
+  return useQuery({
+    queryKey: ["quiniela-predictions", quinielaId],
+    enabled: quinielaId !== null,
+    queryFn: async () => {
+      const { data, error } = await supabase()
+        .from("match_predictions_view")
+        .select("*")
+        .eq("quiniela_id", quinielaId!);
+      if (error) throw new Error(error.message);
+      return (data ?? []) as MatchPredictionRow[];
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Resultados: predicciones de todos los participantes para un partido
 // ---------------------------------------------------------------------------
 

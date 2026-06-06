@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { isLocked, stageLabel } from "@/lib/format";
 import { useActiveQuiniela } from "@/lib/quiniela-context";
+import { PendingReminder } from "@/components/pending-reminder";
 
 const STAGES = [
   "group",
@@ -193,6 +194,15 @@ export function DashboardClient() {
 
   return (
     <div className="flex flex-col gap-5 pb-28">
+      {/* Recordatorio de partidos pendientes */}
+      {matchesData && (
+        <PendingReminder
+          matches={matchesData}
+          predictedMatchIds={new Set(baseline.keys())}
+          onGoToStage={(s) => setStage(s as (typeof STAGES)[number])}
+        />
+      )}
+
       {/* Selector de quiniela */}
       <QuinielaSelector
         quinielas={quinielaList}
