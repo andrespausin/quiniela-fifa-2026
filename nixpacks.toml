@@ -1,0 +1,19 @@
+# nixpacks.toml — control total del build para evitar el cache mount
+# que NIXPACKS añade por defecto y choca con npm ci / npm install.
+#
+# Si railway.json + npm install no es suficiente, este archivo toma
+# el control y deshabilita el cache problemático.
+
+[phases.setup]
+nixPkgs = ["nodejs_22", "npm-11_x"]
+
+[phases.install]
+cmds = ["npm install --no-audit --no-fund --no-progress"]
+cacheDirectories = []
+
+[phases.build]
+cmds = ["npm run build"]
+cacheDirectories = []
+
+[start]
+cmd = "npm run start"

@@ -9,6 +9,9 @@ type PredictionRow = Database["public"]["Tables"]["predictions"]["Row"];
 type TeamRow = Database["public"]["Tables"]["teams"]["Row"];
 type GroupRow = Database["public"]["Tables"]["groups"]["Row"];
 type LeaderboardRow = Database["public"]["Views"]["leaderboard"]["Row"];
+type QuinielaRow = Database["public"]["Tables"]["quinielas"]["Row"];
+type MatchPredictionRow =
+  Database["public"]["Views"]["match_predictions_view"]["Row"];
 
 export interface MatchWithTeams extends MatchRow {
   home_team: Pick<TeamRow, "id" | "code" | "name" | "flag_emoji"> | null;
@@ -37,13 +40,58 @@ export function useMatchesQuery() {
   });
 }
 
-export function usePredictionsQuery() {
+// ---------------------------------------------------------------------------
+// Quinielas
+// ---------------------------------------------------------------------------
+
+export function useQuinielasQuery() {
   return useQuery({
-    queryKey: ["predictions"],
+    queryKey: ["quinielas"],
+    queryFn: async () => {
+      const { data, error } = await supabase()
+        .from("quinielas")
+        .select("*")
+        .order("created_at", { ascending: true });
+      if (error) throw new Error(error.message);
+      return (data ?? []) as QuinielaRow[];
+    },
+  });
+}
+
+export function useCreateQuinielaMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (name: string) => {
+      const sb = supabase();
+      const {
+        data: { user },
+      } = await sb.auth.getUser();
+      if (!user) throw new Error("No autenticado");
+      const { data, error } = await sb
+        .from("quinielas")
+        .insert({ owner_id: user.id, name })
+        .select()
+        .single();
+      if (error) throw new Error(error.message);
+      return data as QuinielaRow;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["quinielas"] }),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Predictions (por quiniela)
+// ---------------------------------------------------------------------------
+
+export function usePredictionsQuery(quinielaId: string | null) {
+  return useQuery({
+    queryKey: ["predictions", quinielaId],
+    enabled: quinielaId !== null,
     queryFn: async () => {
       const { data, error } = await supabase()
         .from("predictions")
-        .select("*");
+        .select("*")
+        .eq("quiniela_id", quinielaId!);
       if (error) throw new Error(error.message);
       return (data ?? []) as PredictionRow[];
     },
@@ -66,7 +114,13 @@ export interface PredictionDraft {
 export function useBatchUpsertPredictions() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (drafts: PredictionDraft[]) => {
+    mutationFn: async ({
+      quinielaId,
+      drafts,
+    }: {
+      quinielaId: string;
+      drafts: PredictionDraft[];
+    }) => {
       if (drafts.length === 0) return [] as PredictionRow[];
       const sb = supabase();
       const {
@@ -76,6 +130,7 @@ export function useBatchUpsertPredictions() {
 
       const rows = drafts.map((d) => ({
         user_id: user.id,
+        quiniela_id: quinielaId,
         match_id: d.matchId,
         home_score: d.homeScore,
         away_score: d.awayScore,
@@ -84,16 +139,20 @@ export function useBatchUpsertPredictions() {
 
       const { data, error } = await sb
         .from("predictions")
-        .upsert(rows, { onConflict: "user_id,match_id" })
+        .upsert(rows, { onConflict: "quiniela_id,match_id" })
         .select();
       if (error) throw new Error(error.message);
       return (data ?? []) as PredictionRow[];
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["predictions"] });
+    onSuccess: (_, { quinielaId }) => {
+      qc.invalidateQueries({ queryKey: ["predictions", quinielaId] });
     },
   });
 }
+
+// ---------------------------------------------------------------------------
+// Leaderboard
+// ---------------------------------------------------------------------------
 
 export function useLeaderboardQuery() {
   return useQuery({
@@ -106,5 +165,24 @@ export function useLeaderboardQuery() {
       return (data ?? []) as LeaderboardRow[];
     },
     refetchInterval: 60_000,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Resultados: predicciones de todos los participantes para un partido
+// ---------------------------------------------------------------------------
+
+export function useMatchPredictionsQuery(matchId: number | null) {
+  return useQuery({
+    queryKey: ["match-predictions", matchId],
+    enabled: matchId !== null,
+    queryFn: async () => {
+      const { data, error } = await supabase()
+        .from("match_predictions_view")
+        .select("*")
+        .eq("match_id", matchId!);
+      if (error) throw new Error(error.message);
+      return (data ?? []) as MatchPredictionRow[];
+    },
   });
 }

@@ -5,6 +5,8 @@ import {
   useBatchUpsertPredictions,
   useMatchesQuery,
   usePredictionsQuery,
+  useQuinielasQuery,
+  useCreateQuinielaMutation,
   type MatchWithTeams,
   type PredictionDraft,
 } from "@/lib/queries";
@@ -14,6 +16,7 @@ import {
 } from "@/components/prediction-row";
 import { Button } from "@/components/ui/button";
 import { isLocked, stageLabel } from "@/lib/format";
+import { useActiveQuiniela } from "@/lib/quiniela-context";
 
 const STAGES = [
   "group",
@@ -57,17 +60,30 @@ function draftsEqual(a: PredictionDraftValue, b: PredictionDraftValue) {
 }
 
 export function DashboardClient() {
+  const { activeId, setActive } = useActiveQuiniela();
+  const quinielas = useQuinielasQuery();
+  const createQuiniela = useCreateQuinielaMutation();
+
+  const quinielaList = quinielas.data ?? [];
+
+  // Si aún no hay activeId (primera carga o localStorage vacío), auto-seleccionar
+  // la primera quiniela disponible.
+  const effectiveId: string | null = (() => {
+    if (activeId && quinielaList.find((q) => q.id === activeId)) return activeId;
+    if (quinielaList.length > 0) return quinielaList[0].id;
+    return null;
+  })();
+
   const matches = useMatchesQuery();
-  const predictions = usePredictionsQuery();
+  const predictions = usePredictionsQuery(effectiveId);
   const batch = useBatchUpsertPredictions();
   const [stage, setStage] = useState<(typeof STAGES)[number]>("group");
-  // Sólo entradas que el usuario tocó. El valor "efectivo" siempre se
-  // calcula como override ?? baseline ?? emptyDraft, así no necesitamos
-  // sincronizar via useEffect.
   const [overrides, setOverrides] = useState<
     Record<number, PredictionDraftValue>
   >({});
   const [okFlash, setOkFlash] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
 
   const predictionsData = predictions.data;
   const matchesData = matches.data;
@@ -93,7 +109,6 @@ export function DashboardClient() {
     (matchId: number) => (value: PredictionDraftValue) =>
       setOverrides((prev) => ({ ...prev, [matchId]: value }));
 
-  // Cambios listos para guardar (excluye bloqueados y partidos sin equipos).
   const dirtyDrafts = useMemo<PredictionDraft[]>(() => {
     if (!matchesData) return [];
     const out: PredictionDraft[] = [];
@@ -127,14 +142,13 @@ export function DashboardClient() {
     [matchesData, stage],
   );
 
-  // Set de matchIds con cambios sin guardar, para resaltar contadores por sección.
   const dirtyMatchIds = useMemo(
     () => new Set(dirtyDrafts.map((d) => d.matchId)),
     [dirtyDrafts],
   );
 
-  if (matches.isLoading) {
-    return <p className="text-sm text-zinc-500">Cargando partidos…</p>;
+  if (matches.isLoading || quinielas.isLoading) {
+    return <p className="text-sm text-zinc-500">Cargando…</p>;
   }
   if (matches.error) {
     return (
@@ -156,9 +170,9 @@ export function DashboardClient() {
   }
 
   const onSave = async () => {
-    if (dirtyDrafts.length === 0) return;
+    if (dirtyDrafts.length === 0 || !effectiveId) return;
     try {
-      await batch.mutateAsync(dirtyDrafts);
+      await batch.mutateAsync({ quinielaId: effectiveId, drafts: dirtyDrafts });
       setOkFlash(true);
       setTimeout(() => setOkFlash(false), 1800);
     } catch {
@@ -168,8 +182,33 @@ export function DashboardClient() {
 
   const onDiscard = () => setOverrides({});
 
+  const onCreateQuiniela = async () => {
+    const name = newName.trim() || "Mi quiniela";
+    const q = await createQuiniela.mutateAsync(name);
+    setActive(q.id);
+    setNewName("");
+    setShowCreate(false);
+    setOverrides({});
+  };
+
   return (
     <div className="flex flex-col gap-5 pb-28">
+      {/* Selector de quiniela */}
+      <QuinielaSelector
+        quinielas={quinielaList}
+        activeId={effectiveId}
+        onSelect={(id) => {
+          setActive(id);
+          setOverrides({});
+        }}
+        showCreate={showCreate}
+        onToggleCreate={() => setShowCreate((v) => !v)}
+        newName={newName}
+        onNewNameChange={setNewName}
+        onCreateSubmit={onCreateQuiniela}
+        creating={createQuiniela.isPending}
+      />
+
       <div className="flex flex-wrap gap-1.5">
         {STAGES.map((s) => {
           const count = (matchesData ?? []).filter((m) => m.stage === s).length;
@@ -222,6 +261,93 @@ export function DashboardClient() {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Selector de quiniela
+// ---------------------------------------------------------------------------
+function QuinielaSelector({
+  quinielas,
+  activeId,
+  onSelect,
+  showCreate,
+  onToggleCreate,
+  newName,
+  onNewNameChange,
+  onCreateSubmit,
+  creating,
+}: {
+  quinielas: { id: string; name: string }[];
+  activeId: string | null;
+  onSelect: (id: string) => void;
+  showCreate: boolean;
+  onToggleCreate: () => void;
+  newName: string;
+  onNewNameChange: (v: string) => void;
+  onCreateSubmit: () => void;
+  creating: boolean;
+}) {
+  if (quinielas.length === 0 && !showCreate) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-xs font-medium text-zinc-500">Quiniela:</span>
+      {quinielas.map((q) => (
+        <button
+          key={q.id}
+          onClick={() => onSelect(q.id)}
+          className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+            q.id === activeId
+              ? "bg-emerald-600 text-white"
+              : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+          }`}
+        >
+          {q.name}
+        </button>
+      ))}
+      {showCreate ? (
+        <div className="flex items-center gap-1.5">
+          <input
+            autoFocus
+            type="text"
+            placeholder="Nombre de la quiniela"
+            value={newName}
+            onChange={(e) => onNewNameChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") onCreateSubmit();
+              if (e.key === "Escape") onToggleCreate();
+            }}
+            className="h-7 rounded-lg border border-zinc-300 bg-white px-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-900"
+          />
+          <button
+            onClick={onCreateSubmit}
+            disabled={creating}
+            className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+          >
+            {creating ? "…" : "Crear"}
+          </button>
+          <button
+            onClick={onToggleCreate}
+            className="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+          >
+            Cancelar
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={onToggleCreate}
+          className="rounded-full border border-dashed border-zinc-300 px-3 py-1 text-xs text-zinc-500 hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-700"
+        >
+          + Nueva quiniela
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// GroupStageView / KnockoutView / CollapsibleSection
+// ---------------------------------------------------------------------------
 function GroupStageView({
   matches,
   baseline,

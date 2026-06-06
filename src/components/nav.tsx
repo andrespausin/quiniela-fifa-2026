@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 const items = [
   { href: "/dashboard", label: "Mis predicciones" },
   { href: "/eliminatorias", label: "Eliminatorias" },
+  { href: "/resultados", label: "Resultados" },
   { href: "/clasificacion", label: "Clasificación" },
 ];
 

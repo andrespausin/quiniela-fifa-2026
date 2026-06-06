@@ -42,11 +42,18 @@ export function ClasificacionClient() {
           ) : (
             rows.map((r, i) => (
               <tr
-                key={r.user_id}
+                key={r.quiniela_id}
                 className="border-t border-zinc-100 dark:border-zinc-800"
               >
                 <td className="px-4 py-2 font-mono text-zinc-500">{i + 1}</td>
-                <td className="px-4 py-2 font-medium">{r.display_name}</td>
+                <td className="px-4 py-2">
+                  <span className="font-medium">{r.display_name}</span>
+                  {r.quiniela_name !== "Mi quiniela" ? (
+                    <span className="ml-1.5 rounded-full bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-500 dark:bg-zinc-800">
+                      {r.quiniela_name}
+                    </span>
+                  ) : null}
+                </td>
                 <td className="px-4 py-2 text-right tabular-nums text-zinc-600 dark:text-zinc-300">
                   {r.match_points}
                 </td>

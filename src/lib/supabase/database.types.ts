@@ -15,6 +15,19 @@ export type Database = {
         Insert: { id: string; display_name: string };
         Update: { display_name?: string };
       };
+      quinielas: {
+        Row: {
+          id: string;
+          owner_id: string;
+          name: string;
+          created_at: string;
+        };
+        Insert: {
+          owner_id: string;
+          name?: string;
+        };
+        Update: { name?: string };
+      };
       teams: {
         Row: {
           id: number;
@@ -89,6 +102,7 @@ export type Database = {
         Row: {
           id: number;
           user_id: string;
+          quiniela_id: string;
           match_id: number;
           home_score: number;
           away_score: number;
@@ -99,6 +113,7 @@ export type Database = {
         };
         Insert: {
           user_id: string;
+          quiniela_id: string;
           match_id: number;
           home_score: number;
           away_score: number;
@@ -114,11 +129,13 @@ export type Database = {
         Row: {
           id: number;
           user_id: string;
+          quiniela_id: string;
           stage: Database["public"]["Enums"]["match_stage"];
           team_id: number;
         };
         Insert: {
           user_id: string;
+          quiniela_id: string;
           stage: Database["public"]["Enums"]["match_stage"];
           team_id: number;
         };
@@ -156,11 +173,27 @@ export type Database = {
     Views: {
       leaderboard: {
         Row: {
+          quiniela_id: string;
           user_id: string;
           display_name: string;
+          quiniela_name: string;
           total_points: number;
           match_points: number;
           bracket_points: number;
+        };
+      };
+      match_predictions_view: {
+        Row: {
+          id: number;
+          quiniela_id: string;
+          user_id: string;
+          match_id: number;
+          home_score: number;
+          away_score: number;
+          winner: "home" | "away" | "draw" | null;
+          points: number | null;
+          quiniela_name: string;
+          display_name: string;
         };
       };
     };

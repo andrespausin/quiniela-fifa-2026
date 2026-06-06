@@ -20,7 +20,8 @@
       "Bash(npx tsx *)",
       "Bash(pkill -f \"next dev\")",
       "Bash(pkill -f \"next-server\")",
-      "Bash(git -c user.email=candrespausin2001@gmail.com -c 'user.name=Andres Pausin' commit -m ' *)"
+      "Bash(git -c user.email=candrespausin2001@gmail.com -c 'user.name=Andres Pausin' commit -m ' *)",
+      "Bash(npx tsc *)"
     ],
     "additionalDirectories": [
       "/home/andrespausin/Documents/Pausin/quiniela-2026/quiniela-fifa-2026/.next",
