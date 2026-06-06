@@ -36,7 +36,7 @@ const dateFmt = new Intl.DateTimeFormat("es", {
 });
 
 function emptyDraft(): PredictionDraftValue {
-  return { homeScore: 0, awayScore: 0, winner: null };
+  return { homeScore: null, awayScore: null, winner: null };
 }
 
 function draftFromServer(p?: {
@@ -118,16 +118,10 @@ export function DashboardClient() {
       if (!override) continue;
       if (isLocked(match.kickoff_at)) continue;
       if (!match.home_team_id || !match.away_team_id) continue;
+      // Scores null significan "no ingresado" → no guardar
+      if (override.homeScore === null || override.awayScore === null) continue;
       const base = baseline.get(match.id);
       if (base && draftsEqual(base, override)) continue;
-      if (
-        !base &&
-        override.homeScore === 0 &&
-        override.awayScore === 0 &&
-        !override.winner
-      ) {
-        continue;
-      }
       out.push({
         matchId: match.id,
         homeScore: override.homeScore,
@@ -405,8 +399,8 @@ function GroupStageView({
                 const base = baseline.get(m.id);
                 const dirty = !!base
                   ? !draftsEqual(base, draft)
-                  : draft.homeScore !== 0 ||
-                    draft.awayScore !== 0 ||
+                  : draft.homeScore !== null ||
+                    draft.awayScore !== null ||
                     !!draft.winner;
                 return (
                   <PredictionRow
@@ -531,8 +525,8 @@ function KnockoutView({
                 const base = baseline.get(m.id);
                 const dirty = !!base
                   ? !draftsEqual(base, draft)
-                  : draft.homeScore !== 0 ||
-                    draft.awayScore !== 0 ||
+                  : draft.homeScore !== null ||
+                    draft.awayScore !== null ||
                     !!draft.winner;
                 return (
                   <PredictionRow

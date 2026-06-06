@@ -4,8 +4,8 @@ import type { MatchWithTeams } from "@/lib/queries";
 import { formatKickoff, isLocked, timeLeftLabel } from "@/lib/format";
 
 export interface PredictionDraftValue {
-  homeScore: number;
-  awayScore: number;
+  homeScore: number | null;
+  awayScore: number | null;
   winner: "home" | "away" | "draw" | null;
 }
 
@@ -33,7 +33,9 @@ export function PredictionRow({
   const locked = isLocked(match.kickoff_at);
   const teamsKnown = Boolean(match.home_team && match.away_team);
   const showPenalty =
-    match.stage !== "group" && draft.homeScore === draft.awayScore;
+    match.stage !== "group" &&
+    draft.homeScore !== null &&
+    draft.homeScore === draft.awayScore;
 
   const homeFlag = match.home_team?.flag_emoji ?? "";
   const awayFlag = match.away_team?.flag_emoji ?? "";
@@ -128,9 +130,9 @@ function TeamRow({
 }: {
   flag: string;
   name: string;
-  value: number;
+  value: number | null;
   disabled?: boolean;
-  onChange: (v: number) => void;
+  onChange: (v: number | null) => void;
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
@@ -150,41 +152,55 @@ function Stepper({
   disabled,
   onChange,
 }: {
-  value: number;
+  value: number | null;
   disabled?: boolean;
-  onChange: (v: number) => void;
+  onChange: (v: number | null) => void;
 }) {
-  const dec = () => onChange(Math.max(0, value - 1));
-  const inc = () => onChange(Math.min(30, value + 1));
+  // null → "–" (no ingresado). + arranca desde 0. − en 0 vuelve a null.
+  const dec = () => {
+    if (value === null) return;
+    onChange(value === 0 ? null : value - 1);
+  };
+  const inc = () => onChange(value === null ? 0 : Math.min(30, value + 1));
+
   return (
     <div className="flex items-center gap-1 sm:gap-1.5">
       <button
         type="button"
         aria-label="Restar gol"
-        disabled={disabled || value <= 0}
+        disabled={disabled || value === null}
         onClick={dec}
         className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-300 bg-white text-xl font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
       >
         −
       </button>
-      <input
-        type="number"
-        inputMode="numeric"
-        min={0}
-        max={30}
-        disabled={disabled}
-        aria-label="Goles"
-        value={value}
-        onChange={(e) => {
-          const n = e.target.valueAsNumber;
-          onChange(Number.isFinite(n) ? Math.max(0, Math.min(30, n)) : 0);
-        }}
-        className="h-10 w-12 rounded-lg border border-zinc-300 bg-white text-center text-lg font-bold tabular-nums focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950 dark:disabled:bg-zinc-900"
-      />
+
+      {/* Muestra "–" si aún no se ha ingresado, input numérico si ya hay valor */}
+      {value === null ? (
+        <div className="flex h-10 w-12 items-center justify-center rounded-lg border border-dashed border-zinc-300 bg-white text-lg text-zinc-400 dark:border-zinc-700 dark:bg-zinc-950">
+          –
+        </div>
+      ) : (
+        <input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          max={30}
+          disabled={disabled}
+          aria-label="Goles"
+          value={value}
+          onChange={(e) => {
+            const n = e.target.valueAsNumber;
+            onChange(Number.isFinite(n) ? Math.max(0, Math.min(30, n)) : 0);
+          }}
+          className="h-10 w-12 rounded-lg border border-zinc-300 bg-white text-center text-lg font-bold tabular-nums focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950 dark:disabled:bg-zinc-900"
+        />
+      )}
+
       <button
         type="button"
         aria-label="Sumar gol"
-        disabled={disabled || value >= 30}
+        disabled={disabled || (value !== null && value >= 30)}
         onClick={inc}
         className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-300 bg-white text-xl font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
       >
