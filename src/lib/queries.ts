@@ -151,6 +151,43 @@ export function useBatchUpsertPredictions() {
 }
 
 // ---------------------------------------------------------------------------
+// Perfil
+// ---------------------------------------------------------------------------
+
+export function useUpdateProfileMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (displayName: string) => {
+      const sb = supabase();
+      const {
+        data: { user },
+      } = await sb.auth.getUser();
+      if (!user) throw new Error("No autenticado");
+      const { error } = await sb
+        .from("profiles")
+        .update({ display_name: displayName })
+        .eq("id", user.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["leaderboard"] }),
+  });
+}
+
+export function useRenameQuinielaMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await supabase()
+        .from("quinielas")
+        .update({ name })
+        .eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["quinielas"] }),
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Leaderboard
 // ---------------------------------------------------------------------------
 
