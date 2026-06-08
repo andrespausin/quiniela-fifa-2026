@@ -68,6 +68,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: profileErr.message }, { status: 500 });
   }
 
+  // Crear la quiniela por defecto (necesaria para poder guardar predicciones)
+  const { error: quinielaErr } = await admin.from("quinielas").insert({
+    owner_id: created.user.id,
+    name: "Mi quiniela",
+  });
+  if (quinielaErr) {
+    await admin.auth.admin.deleteUser(created.user.id);
+    return NextResponse.json({ error: quinielaErr.message }, { status: 500 });
+  }
+
   // Iniciar sesión en el cliente server para setear cookies
   const supabase = await createSupabaseServerClient();
   const { error: signInErr } = await supabase.auth.signInWithPassword({

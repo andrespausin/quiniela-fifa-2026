@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   useBatchUpsertPredictions,
   useMatchesQuery,
@@ -66,6 +66,21 @@ export function DashboardClient() {
   const createQuiniela = useCreateQuinielaMutation();
 
   const quinielaList = quinielas.data ?? [];
+
+  // Si la tabla quinielas existe pero el usuario no tiene ninguna
+  // (p.ej. se registró antes de que el signup las creara automáticamente),
+  // crear una por defecto de forma transparente.
+  useEffect(() => {
+    if (
+      !quinielas.isLoading &&
+      !quinielas.error &&
+      quinielaList.length === 0 &&
+      !createQuiniela.isPending &&
+      !createQuiniela.isSuccess
+    ) {
+      createQuiniela.mutate("Mi quiniela");
+    }
+  }, [quinielas.isLoading, quinielas.error, quinielaList.length, createQuiniela]);
 
   // Si aún no hay activeId (primera carga o localStorage vacío), auto-seleccionar
   // la primera quiniela disponible.
