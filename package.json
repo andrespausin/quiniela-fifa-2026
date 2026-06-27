@@ -14,7 +14,8 @@
     "sync:fixtures": "tsx scripts/sync.ts fixtures",
     "sync:results": "tsx scripts/sync.ts results",
     "sync:all": "tsx scripts/sync.ts all",
-    "preflight": "tsx scripts/preflight.ts"
+    "preflight": "tsx scripts/preflight.ts",
+    "test:bracket-sync": "tsx scripts/test-bracket-sync.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

@@ -4,7 +4,9 @@ import { syncResults } from "@/lib/tournament/sync";
 
 /**
  * Actualiza marcadores y estado de los partidos en curso o finalizados,
- * y recalcula bracket_results (clasificados a cada ronda).
+ * resuelve los equipos de los próximos cruces de eliminatoria en cuanto
+ * el proveedor los publica (vía syncFixtures), y recalcula bracket_results
+ * (clasificados a cada ronda).
  *
  * Recomendado correr cada 10-15 min durante días de partido.
  *
