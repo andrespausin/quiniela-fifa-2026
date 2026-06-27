@@ -131,35 +131,21 @@ async function rebuildGroupTeams(supabase: Supa) {
 }
 
 /**
- * Sincroniza únicamente los resultados (estado y marcador) de los
- * partidos finalizados o en juego. Mucho más liviano que syncFixtures.
+ * Sincroniza resultados y, de paso, los cruces de eliminatoria: usa
+ * syncFixtures() (que ya trae home_team_id/away_team_id resueltos por el
+ * proveedor además de marcador/estado) en vez de actualizar solo el
+ * marcador, para que en cuanto el proveedor resuelva un cruce ("ganador
+ * de octavos pasa a cuartos", "mejor tercero vs 1° de grupo", etc.) los
+ * partidos siguientes queden con sus equipos y los usuarios puedan
+ * predecirlos sin esperar a una sincronización de fixtures aparte.
  */
 export async function syncResults() {
-  const provider = getFootballProvider();
-  const supabase = createSupabaseAdminClient();
-  const matches = await provider.fetchMatches();
-
-  let updated = 0;
-  for (const m of matches) {
-    if (m.status !== "finished" && m.status !== "live") continue;
-
-    const { error } = await supabase
-      .from("matches")
-      .update({
-        status: m.status,
-        home_score: m.homeScore ?? null,
-        away_score: m.awayScore ?? null,
-        home_score_pen: m.homeScorePen ?? null,
-        away_score_pen: m.awayScorePen ?? null,
-      })
-      .eq("external_id", m.externalId);
-    if (!error) updated += 1;
-  }
+  const { upserted } = await syncFixtures();
 
   // Tras actualizar resultados, recalcular bracket_results y avanzar cruces.
   await refreshBracketResults();
 
-  return { updated };
+  return { updated: upserted };
 }
 
 /**
