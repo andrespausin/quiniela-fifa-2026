@@ -123,8 +123,10 @@ supabase/migrations/
 | Solo ganador/empate | 1 pt | × stage_multiplier |
 | Falla | 0 pts | — |
 
-`stage_multiplier`: group=1, round_of_32/round_of_16=2, quarter_final=2(?), semi_final=4, final=4, third_place=2.
+`stage_multiplier`: group=1, round_of_32/round_of_16=2, quarter_final=3, semi_final=4, final=4, third_place=2.
 Para eliminatorias con penales: el usuario predice empate + winner (campo `winner`).
+
+Detalle con ejemplos para los usuarios en la página `/reglas` (`src/app/(app)/reglas/page.tsx`).
 
 El trigger `matches_after_finish` recalcula automáticamente los puntos de todas las predicciones cuando un partido cambia a `finished`.
 

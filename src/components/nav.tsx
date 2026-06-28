@@ -9,6 +9,7 @@ const items = [
   { href: "/jugadores", label: "Jugadores" },
   { href: "/resultados", label: "Resultados" },
   { href: "/clasificacion", label: "Clasificación" },
+  { href: "/reglas", label: "Normativa" },
   { href: "/perfil", label: "Perfil" },
 ];
 
