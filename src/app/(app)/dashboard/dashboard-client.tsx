@@ -413,7 +413,7 @@ function GroupStageView({
   const groups = [...byGroup.entries()].sort(([a], [b]) => a.localeCompare(b));
 
   return (
-    <div className="grid gap-3 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
       {groups.map(([code, ms]) => {
         const sorted = [...ms].sort((a, b) =>
           a.kickoff_at.localeCompare(b.kickoff_at),
@@ -569,7 +569,7 @@ function KnockoutView({
             dirtyCount={dayDirty}
             defaultOpen
           >
-            <div className="grid gap-2 p-2 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2 p-2 md:grid-cols-2">
               {sorted.map((m) => {
                 const draft = draftFor(m.id);
                 const base = baseline.get(m.id);

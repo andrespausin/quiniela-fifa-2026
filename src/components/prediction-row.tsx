@@ -136,8 +136,8 @@ function TeamRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <div className="flex min-w-0 items-center gap-3">
-        <span className="text-3xl leading-none sm:text-4xl">{flag || "🏳️"}</span>
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <span className="shrink-0 text-3xl leading-none sm:text-4xl">{flag || "🏳️"}</span>
         <span className="truncate text-base font-semibold sm:text-lg">
           {name}
         </span>
@@ -164,7 +164,7 @@ function Stepper({
   const inc = () => onChange(value === null ? 0 : Math.min(30, value + 1));
 
   return (
-    <div className="flex items-center gap-1 sm:gap-1.5">
+    <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
       <button
         type="button"
         aria-label="Restar gol"
